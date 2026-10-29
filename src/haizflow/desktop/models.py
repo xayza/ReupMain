@@ -534,7 +534,7 @@ class ProjectBrowserProxyModel(QSortFilterProxyModel):
         project_name = str(model.data(index, ProjectListModel.ProjectNameRole) or "")
         project_type = str(model.data(index, ProjectListModel.ProjectTypeRole) or "").lower()
         status = str(model.data(index, ProjectListModel.StatusRole) or "").lower()
-        if project_type not in {"single", "manual", "batch", "download", "publish"}:
+        if project_type not in {"single", "manual", "batch", "download", "publish", "reup"}:
             return False
         if self._query and self._query not in project_name.casefold():
             return False

@@ -2621,7 +2621,7 @@ class SocialPublishController:
         )
 
     def _ensure_publish_project(self) -> bool:
-        if self._host._project_type == "publish" and self._project_key and self._project_root:
+        if self._host._project_type in {"publish", "reup"} and self._project_key and self._project_root:
             return True
         QMessageBox.information(None, "Social publishing", "Open a social publishing project first.")
         return False

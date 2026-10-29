@@ -37,7 +37,7 @@ _WINDOWS_RESERVED_NAMES = {
     *(f"COM{number}" for number in range(1, 10)),
     *(f"LPT{number}" for number in range(1, 10)),
 }
-PROJECT_TYPES = frozenset({"single", "manual", "batch", "download", "publish"})
+PROJECT_TYPES = frozenset({"single", "manual", "batch", "download", "publish", "reup"})
 DOWNLOAD_VIDEO_CATEGORIES = ("channel", "video")
 DOWNLOAD_VIDEO_EXTENSIONS = frozenset({".mp4", ".mov", ".mkv"})
 
@@ -258,14 +258,14 @@ def project_videos_dir_for_key(project_key_value: str) -> str:
 
 def project_downloads_dir_for_key(project_key_value: str) -> str:
     record = get_project(project_key_value)
-    if not record or normalize_project_type(record.get("project_type")) != "download":
+    if not record or normalize_project_type(record.get("project_type")) not in {"download", "reup"}:
         raise ValueError("The selected project is not a download project.")
     return os.path.join(_record_root(record), "downloads")
 
 
 def project_publishing_dir_for_key(project_key_value: str) -> str:
     record = get_project(project_key_value)
-    if not record or normalize_project_type(record.get("project_type")) != "publish":
+    if not record or normalize_project_type(record.get("project_type")) not in {"publish", "reup"}:
         raise ValueError("The selected project is not a publishing project.")
     return os.path.join(_record_root(record), "publishing")
 
@@ -670,10 +670,10 @@ def _write_project_record(records: list[dict[str, Any]], record: dict[str, Any])
     os.makedirs(root, exist_ok=True)
     if project_type in {"single", "manual", "batch"}:
         os.makedirs(os.path.join(root, "videos"), exist_ok=True)
-    if project_type == "download":
+    if project_type in {"download", "reup"}:
         for category in ("channel", "video", "audio"):
             os.makedirs(os.path.join(root, "downloads", category), exist_ok=True)
-    elif project_type == "publish":
+    if project_type in {"publish", "reup"}:
         os.makedirs(os.path.join(root, "publishing", "media"), exist_ok=True)
         os.makedirs(os.path.join(root, "publishing", "thumbnails"), exist_ok=True)
     _write_json_atomic(os.path.join(root, PROJECT_MANIFEST_NAME), record)

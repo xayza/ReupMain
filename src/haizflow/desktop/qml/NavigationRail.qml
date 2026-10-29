@@ -72,7 +72,8 @@ Rectangle {
                 { key: "manual", label: qsTr("Thủ công"), icon: "edit" },
                 { key: "batch", label: qsTr("Hàng loạt"), icon: "projects" },
                 { key: "downloads", label: qsTr("Tải xuống"), icon: "download" },
-                { key: "social", label: qsTr("Đăng mạng xã hội"), icon: "share" }
+                { key: "social", label: qsTr("Đăng mạng xã hội"), icon: "share" },
+                { key: "reup", label: qsTr("Reup Thuần"), icon: "share" }
             ]
 
             delegate: Control {

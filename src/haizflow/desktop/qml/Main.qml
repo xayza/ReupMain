@@ -37,6 +37,8 @@ ApplicationWindow {
     readonly property string routeDownloadWorkspace: "download-workspace"
     readonly property string routePublishProjects: "publish-projects"
     readonly property string routePublishWorkspace: "publish-workspace"
+    readonly property string routeReupProjects: "reup-projects"
+    readonly property string routeReupWorkspace: "reup-workspace"
     property string currentRoute: routeHome
     property string workspaceReturnRoute: routeHome
     property var routeHistory: [routeHome]
@@ -63,7 +65,7 @@ ApplicationWindow {
     ].indexOf(AppController.selectedStepId) < 0
     readonly property bool routeCanGoBack: routeHistoryIndex > 0
     readonly property bool routeCanGoForward: routeHistoryIndex < routeHistory.length - 1
-    readonly property bool projectWorkspaceVisible: currentRoute === routeSingleWorkspace || currentRoute === routeManualWorkspace || currentRoute === routeBatchWorkspace || currentRoute === routeBatchVideo || currentRoute === routeDownloadWorkspace || currentRoute === routePublishWorkspace
+    readonly property bool projectWorkspaceVisible: currentRoute === routeSingleWorkspace || currentRoute === routeManualWorkspace || currentRoute === routeBatchWorkspace || currentRoute === routeBatchVideo || currentRoute === routeDownloadWorkspace || currentRoute === routePublishWorkspace || currentRoute === routeReupWorkspace
     readonly property bool globalNavigationBlocked: lazyDialogVisible(projectSetupDialogLoader) || lazyDialogVisible(urlImportDialogLoader) || lazyDialogVisible(downloadProjectSourceDialogLoader) || lazyDialogVisible(batchSettingsDialogLoader) || lazyDialogVisible(translationReviewDialogLoader) || lazyDialogVisible(aboutDialogLoader) || lazyDialogVisible(copyrightDialogLoader) || appAlertDialog.visible || modelSetupOverlayLoader.active
     readonly property bool downloadCanGoBack: routeHost.downloadCanGoBack
     readonly property bool downloadCanGoForward: routeHost.downloadCanGoForward
@@ -76,13 +78,15 @@ ApplicationWindow {
         || currentRoute === routeBatchVideo
         || currentRoute === routeDownloadWorkspace
         || currentRoute === routePublishWorkspace
+        || currentRoute === routeReupWorkspace
 
     function syncEditHistoryScope() {
         if (currentRoute === routeSettings || currentRoute === routeApiKeys || currentRoute === routePackages) {
             AppController.setEditHistoryScope("settings");
         } else if (currentRoute === routeBatchWorkspace
                 || currentRoute === routeDownloadWorkspace
-                || currentRoute === routePublishWorkspace) {
+                || currentRoute === routePublishWorkspace
+                || currentRoute === routeReupWorkspace) {
             AppController.setEditHistoryScope("project");
         } else if (currentRoute === routeSingleWorkspace
                 || currentRoute === routeManualWorkspace
@@ -110,6 +114,8 @@ ApplicationWindow {
             return "downloads";
         if (currentRoute === routePublishProjects)
             return "social";
+        if (currentRoute === routeReupProjects || currentRoute === routeReupWorkspace)
+            return "reup";
         return "home";
     }
 
@@ -120,12 +126,12 @@ ApplicationWindow {
     // Reconcile in the background whenever the user returns from a browser.
     // This catches dashboard disconnects immediately without disabling the UI.
     onActiveChanged: {
-        if (active && currentRoute === routePublishWorkspace && !AppController.tiktokPublishBusy)
+        if (active && (currentRoute === routePublishWorkspace || currentRoute === routeReupWorkspace) && !AppController.tiktokPublishBusy)
             AppController.reconcileZernioConnections();
     }
 
     function routeIsAvailable(route) {
-        if (route === routeHome || route === routeProjects || route === routeSettings || route === routeApiKeys || route === routePackages || route === routeSingleProjects || route === routeManualProjects || route === routeBatchProjects || route === routeDownloadProjects || route === routePublishProjects)
+        if (route === routeHome || route === routeProjects || route === routeSettings || route === routeApiKeys || route === routePackages || route === routeSingleProjects || route === routeManualProjects || route === routeBatchProjects || route === routeDownloadProjects || route === routePublishProjects || route === routeReupProjects)
             return true;
         if (!AppController.hasOpenProject)
             return false;
@@ -141,6 +147,8 @@ ApplicationWindow {
             return AppController.projectType === "download";
         if (route === routePublishWorkspace)
             return AppController.projectType === "publish";
+        if (route === routeReupWorkspace)
+            return AppController.projectType === "reup";
         return false;
     }
 
@@ -448,6 +456,8 @@ ApplicationWindow {
                     root.openProjectWorkspace(returnRoute || root.routeDownloadProjects, root.routeDownloadWorkspace);
                 } else if (AppController.projectType === "publish") {
                     root.openProjectWorkspace(returnRoute || root.routePublishProjects, root.routePublishWorkspace);
+                } else if (AppController.projectType === "reup") {
+                    root.openProjectWorkspace(returnRoute || root.routeReupProjects, root.routeReupWorkspace);
                 } else {
                     root.openProjectWorkspace(returnRoute || root.routeSingleProjects, root.routeSingleWorkspace);
                 }
@@ -532,6 +542,8 @@ ApplicationWindow {
                         root.navigate(root.routeDownloadProjects);
                     else if (section === "social")
                         root.navigate(root.routePublishProjects);
+                    else if (section === "reup")
+                        root.navigate(root.routeReupProjects);
                     else
                         root.navigate(root.routeHome);
                 }

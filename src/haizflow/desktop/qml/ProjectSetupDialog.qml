@@ -20,11 +20,13 @@ AppDialog {
                 ? qsTr("Dự án tải xuống")
                 : projectType === "publish"
                     ? qsTr("Dự án đăng mạng xã hội")
-                    : qsTr("Dự án tự động")
+                    : projectType === "reup"
+                        ? qsTr("Dự án Reup Thuần")
+                        : qsTr("Dự án tự động")
 
     function openForType(type) {
         AppController.prepareProjectCreationDirectory();
-        projectType = ["batch", "manual", "download", "publish"].includes(type)
+        projectType = ["batch", "manual", "download", "publish", "reup"].includes(type)
             ? type : "single"
         open()
     }
@@ -59,7 +61,7 @@ AppDialog {
 
     FormSection {
         Layout.fillWidth: true
-        title: root.projectType === "download"
+        title: root.projectType === "download" || root.projectType === "reup"
             ? qsTr("Thư mục tải xuống") : qsTr("Thư mục dự án")
 
         RowLayout {

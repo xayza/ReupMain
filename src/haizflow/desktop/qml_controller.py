@@ -48,6 +48,7 @@ from haizflow.desktop.media import (
     thumbnail_source,
 )
 from haizflow.desktop.media_download_controller import MediaDownloadController
+from haizflow.desktop.reup_thuan_controller import ReupThuanController
 from haizflow.desktop.media_probe import VideoDimensionProbe
 from haizflow.desktop.models import (
     ActivityEventModel,
@@ -261,6 +262,7 @@ class HaizFlowController(QObject):
         self.batch_projects = ProjectGridModel()
         self.download_projects = ProjectGridModel()
         self.publish_projects = ProjectGridModel()
+        self.reup_projects = ProjectGridModel()
         self.batch_videos = VideoListModel()
         self.tiktok_publish_items = SocialPublishListModel()
         self.tiktok_project_sources = SocialProjectSourceListModel()
@@ -427,6 +429,7 @@ class HaizFlowController(QObject):
         self._manual_voice_refresh_timer.timeout.connect(self._refresh_manual_voice)
         self._audio_preview = AudioPreviewController(self)
         self._media_downloader = MediaDownloadController(self)
+        self._reup_thuan = ReupThuanController(self, self)
         self._tiktok_publisher = SocialPublishController(self)
         self._settings_controller = SettingsController(self)
         self._project_workspace = ProjectWorkspaceController(self)
@@ -1014,6 +1017,10 @@ class HaizFlowController(QObject):
         return self.publish_projects
 
     @Property(QObject, constant=True)
+    def reupProjectModel(self):
+        return self.reup_projects
+
+    @Property(QObject, constant=True)
     def tiktokPublishModel(self):
         return self.tiktok_publish_items
 
@@ -1200,6 +1207,10 @@ class HaizFlowController(QObject):
     @Property(QObject, constant=True)
     def mediaDownloader(self):
         return self._media_downloader
+
+    @Property(QObject, constant=True)
+    def reupThuan(self):
+        return self._reup_thuan
 
     @Property(bool, notify=mediaImportChanged)
     def mediaImportBusy(self):
@@ -6777,6 +6788,8 @@ class HaizFlowController(QObject):
             if project_type == "download"
             else self.publish_projects
             if project_type == "publish"
+            else self.reup_projects
+            if project_type == "reup"
             else self.single_projects
         )
 
@@ -6785,14 +6798,14 @@ class HaizFlowController(QObject):
         if commands is not None and commands.is_deleting(project["key"]):
             self.appAlertRequested.emit("Đang xóa dự án", "Chờ dọn tệp hoàn tất.", "info")
             return False
-        if project["project_type"] == "publish" and not self._tiktok_publisher.can_switch_project(project["key"]):
+        if project["project_type"] in {"publish", "reup"} and not self._tiktok_publisher.can_switch_project(project["key"]):
             self.appAlertRequested.emit(
                 "Social publishing",
                 "Wait for the active publishing task to finish before opening another publishing project.",
                 "info",
             )
             return False
-        if project["project_type"] == "download" and not self._media_downloader.can_switch_project(project["key"]):
+        if project["project_type"] in {"download", "reup"} and not self._media_downloader.can_switch_project(project["key"]):
             self.appAlertRequested.emit(
                 "Download project",
                 "Wait for the current channel task to finish or cancel it before opening another download project.",

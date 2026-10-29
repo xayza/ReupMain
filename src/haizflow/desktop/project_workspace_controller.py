@@ -265,12 +265,12 @@ class ProjectWorkspaceController:
         host._batch_video_ids = [video.video_id for video in videos] if host._project_type == "batch" else []
         host._refresh_batch_model()
         publisher = getattr(host, "_tiktok_publisher", None)
-        if host._project_type == "download":
+        if host._project_type in {"download", "reup"}:
             host._media_downloader.attach_project(
                 host._selected_project_key,
                 project_store.project_root_for_key(host._selected_project_key),
             )
-        elif host._project_type == "publish":
+        if host._project_type in {"publish", "reup"}:
             if publisher is not None:
                 publisher.attach_project(
                     host._selected_project_key,
@@ -306,7 +306,7 @@ class ProjectWorkspaceController:
         host.videos.set_videos(all_videos[:40])
         summaries = host._build_project_summaries(all_videos, project_store.list_projects())
         for summary in summaries:
-            if summary["project_type"] != "publish":
+            if summary["project_type"] not in {"publish", "reup"}:
                 continue
             try:
                 publish_summary = tiktok_publish.summarize(project_store.project_root_for_key(summary["key"]))
@@ -325,6 +325,7 @@ class ProjectWorkspaceController:
         host.batch_projects.set_projects([project for project in summaries if project["project_type"] == "batch"])
         host.download_projects.set_projects([project for project in summaries if project["project_type"] == "download"])
         host.publish_projects.set_projects([project for project in summaries if project["project_type"] == "publish"])
+        host.reup_projects.set_projects([project for project in summaries if project["project_type"] == "reup"])
         host._refresh_batch_model()
         host._selected_video_snapshot = (
             video_store.get_video(host._selected_video_id) if host._selected_video_id else None
@@ -391,6 +392,7 @@ class ProjectWorkspaceController:
                 "batch": host.batch_projects,
                 "download": host.download_projects,
                 "publish": host.publish_projects,
+                "reup": host.reup_projects,
             }.get(summary["project_type"])
             if not (host.projects.update_project(summary) and typed_model and typed_model.update_project(summary)):
                 return False

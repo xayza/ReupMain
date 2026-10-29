@@ -200,9 +200,9 @@ class ProjectCommandsController:
             host._selected_video_id = None
             host._settings_owner_video_id = None
             host._selected_project_key = ""
-            if project.get("project_type") == "download":
+            if project.get("project_type") in {"download", "reup"}:
                 host._media_downloader.attach_project("", "")
-            elif project.get("project_type") == "publish":
+            if project.get("project_type") in {"publish", "reup"}:
                 host._tiktok_publisher.detach_project()
             host._batch_video_ids = []
             host._clear_logs()
@@ -1893,9 +1893,9 @@ class ProjectCommandsController:
             return False
         videos = [video for video in video_store.list_videos() if host._video_project_key(video) == key]
         busy = any(host._processing_queue.contains(video.video_id) or video.status == "processing" for video in videos)
-        if project["project_type"] == "download":
+        if project["project_type"] in {"download", "reup"}:
             busy = busy or host._media_downloader.has_project_work(key)
-        if project["project_type"] == "publish":
+        if project["project_type"] in {"publish", "reup"}:
             busy = busy or host._tiktok_publisher.has_project_work(key)
         vi = getattr(host, "_settings_language", "vi") == "vi"
         if busy:
@@ -1936,14 +1936,14 @@ class ProjectCommandsController:
         project_type = str(project.get("project_type") or "single")
         if not project_key or self.is_deleting(project_key):
             return False
-        if project_type == "download" and host._media_downloader.has_project_work(project_key):
+        if project_type in {"download", "reup"} and host._media_downloader.has_project_work(project_key):
             host.appAlertRequested.emit(
                 "Không thể xóa dự án",
                 "Hãy hủy hoặc chờ các tác vụ tải xuống hoàn tất.",
                 "info",
             )
             return False
-        if project_type == "publish" and host._tiktok_publisher.has_project_work(project_key):
+        if project_type in {"publish", "reup"} and host._tiktok_publisher.has_project_work(project_key):
             host.appAlertRequested.emit(
                 "Không thể xóa dự án",
                 "Hãy chờ tác vụ đăng hoặc nhập video hoàn tất.",

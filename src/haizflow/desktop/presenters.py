@@ -98,7 +98,7 @@ def build_project_summaries(videos, persisted_projects=None):
                 {
                     **project,
                     "video_count": 0,
-                    "status": "ready" if project["project_type"] in {"download", "publish"} else "empty",
+                    "status": "ready" if project["project_type"] in {"download", "publish", "reup"} else "empty",
                     "progress": 0,
                     "thumbnail_source": "",
                     "video_size": "",

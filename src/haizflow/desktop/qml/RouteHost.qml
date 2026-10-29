@@ -35,6 +35,8 @@ StackLayout {
             "download-workspace": 8,
             "publish-projects": 9,
             "publish-workspace": 10,
+            "reup-projects": 14,
+            "reup-workspace": 15,
             "home": 11,
             "projects": 12,
             "settings": 13,
@@ -53,6 +55,8 @@ StackLayout {
             return "download-workspace";
         if (projectType === "publish")
             return "publish-workspace";
+        if (projectType === "reup")
+            return "reup-workspace";
         return "single-workspace";
     }
 
@@ -284,4 +288,28 @@ StackLayout {
         Layout.margins: 0
         onNavigateRequested: function(route) { root.navigateRequested(route); }
     }
+
+    ProjectsPage {
+        projectType: "reup"
+        // qmllint disable stale-property-read
+        projectModel: AppController.reupProjectModel
+        // qmllint enable stale-property-read
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.margins: 0
+        onRequestNewProject: root.newProjectRequested("reup", "reup-projects")
+        onOpenProject: root.workspaceRequested("reup-projects", "reup-workspace")
+    }
+
+    Loader {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.margins: 0
+        active: root.currentRoute === "reup-workspace"
+        asynchronous: true
+        sourceComponent: Component {
+            ReupThuanPage {}
+        }
+    }
+
 }

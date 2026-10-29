@@ -1311,14 +1311,14 @@ class ProjectImportController:
             return False
         normalized_type = project_store.normalize_project_type(project_type)
         publisher = getattr(host, "_tiktok_publisher", None)
-        if normalized_type == "download" and not host._media_downloader.can_switch_project("__new_download_project__"):
+        if normalized_type in {"download", "reup"} and not host._media_downloader.can_switch_project("__new_download_project__"):
             QMessageBox.information(
                 None,
                 "Download project",
                 "Wait for the current channel task to finish or cancel it before creating another download project.",
             )
             return False
-        if normalized_type == "publish" and publisher is not None and not publisher.can_switch_project("__new_project__"):
+        if normalized_type in {"publish", "reup"} and publisher is not None and not publisher.can_switch_project("__new_project__"):
             QMessageBox.information(
                 None,
                 "Social publishing",
@@ -1346,9 +1346,9 @@ class ProjectImportController:
             pass  # A settings failure must not orphan a successfully-created project.
         host._selected_project_key = project["key"]
         self._reset_new_project_setup()
-        if host._project_type == "download":
+        if host._project_type in {"download", "reup"}:
             host._media_downloader.attach_project(project["key"], project["project_root"])
-        elif host._project_type == "publish":
+        if host._project_type in {"publish", "reup"}:
             if publisher is not None:
                 # A publishing project owns its caption, hashtags, selected
                 # platform and post options. Persist a blank state up front so

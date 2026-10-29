@@ -27,7 +27,8 @@ Control {
     readonly property string typeLabel: projectType === "manual" ? qsTr("Thủ công")
         : projectType === "batch" ? qsTr("Hàng loạt")
         : projectType === "download" ? qsTr("Tải xuống")
-        : projectType === "publish" ? qsTr("Đăng mạng xã hội") : qsTr("Tự động")
+        : projectType === "publish" ? qsTr("Đăng mạng xã hội")
+        : projectType === "reup" ? qsTr("Reup Thuần") : qsTr("Tự động")
     readonly property color statusColor: status === "done" ? Theme.success : status === "failed" || status === "cancelled" ? Theme.danger : status === "processing" ? Theme.warning : status === "awaiting_review" || status === "manual_ready" ? Theme.interactive : Theme.textMuted
 
     height: Math.round(width * 0.56 + 64)
@@ -140,7 +141,8 @@ Control {
                 anchors.fill: parent
                 source: root.thumbnailSource
                 fallbackIcon: root.projectType === "download" ? "download"
-                    : root.projectType === "publish" ? "share" : "video"
+                    : root.projectType === "publish" ? "share"
+                    : root.projectType === "reup" ? "share" : "video"
             }
 
             Rectangle {
