@@ -393,7 +393,10 @@ class ResourcePackController(QObject):
                     "summary": descriptions.get(pack_id, ""),
                     "hardwareCompatible": compatible,
                     "hardwareWarning": warning,
-                    "canInstall": bool(compatible and needs_download and runtime_available
+                    # Downloading is not running: hardware compatibility is
+                    # shown as a warning (hardwareCompatible/hardwareWarning)
+                    # but must not block downloading a pack the user wants.
+                    "canInstall": bool(needs_download and runtime_available
                                        and source.get("status") in {"missing", "paused", "failed"}
                                        and not self._storage_mutating()),
                     "canRemove": bool(source.get("canRemove") and not self._storage_mutating()),
@@ -672,13 +675,15 @@ class ResourcePackController(QObject):
                 runtime_compatible, runtime_reason = self._hardware_compatibility(unit)
                 if not runtime_compatible:
                     compatible, reason = False, runtime_reason
-            if not compatible:
+            if not compatible and reason:
+                # Downloading only: warn, do not block. Running the model
+                # later is still gated by the preflight checks in
+                # project_commands_controller / qml_controller.
                 self._host.appAlertRequested.emit(
-                    "Gói không phù hợp với máy này",
-                    reason,
+                    "Tải gói dù máy có thể không phù hợp",
+                    reason + " Gói vẫn sẽ được tải theo yêu cầu của bạn; việc chạy model sau này vẫn có thể bị chặn nếu máy không đáp ứng.",
                     "warning",
                 )
-                continue
             self._queue_operation("install", pack_id)
         self.changed.emit()
 
