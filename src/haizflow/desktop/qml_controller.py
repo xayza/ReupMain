@@ -7896,7 +7896,7 @@ class HaizFlowController(QObject):
         level = str(severity or "information").strip().lower()
         if level not in {"information", "warning", "critical"}:
             level = "information"
-        self.appAlertRequested.emit(str(title or "HaizFlow"), str(message or ""), level)
+        self.appAlertRequested.emit(str(title or "ReupMain"), str(message or ""), level)
 
     def _show_app_question(self, title: str, message: str, *_args):
         # QMessageBox callers are synchronous. A local event loop keeps their
@@ -7912,7 +7912,7 @@ class HaizFlowController(QObject):
         if app is not None:
             app.aboutToQuit.connect(loop.quit)
         try:
-            self.appConfirmationRequested.emit(str(title or "HaizFlow"), str(message or ""))
+            self.appConfirmationRequested.emit(str(title or "ReupMain"), str(message or ""))
             if not self._confirmation_responded:
                 loop.exec()
         finally:

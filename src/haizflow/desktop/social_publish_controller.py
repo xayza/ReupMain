@@ -2550,7 +2550,7 @@ class SocialPublishController:
             self._stop_post_status_poll()
             self._status = (
                 "The platform is still preparing the public post link. "
-                "HaizFlow will check again when this project is reopened."
+                "ReupMain will check again when this project is reopened."
             )
             self._emit_changed()
             return

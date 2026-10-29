@@ -59,8 +59,8 @@ class RuntimeDeviceController:
             return True
         answer = QMessageBox.question(
             None,
-            "Exit HaizFlow",
-            "HaizFlow is still processing or downloading data.\n\n"
+            "Exit ReupMain",
+            "ReupMain is still processing or downloading data.\n\n"
             "Exit now? The active video will be paused, active downloads will be cancelled, "
             "and queued videos will remain available for later.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,

@@ -35,7 +35,7 @@ AppDialog {
     ZernioSetupStep {
         Layout.fillWidth: true
         stepNumber: 3
-        title: qsTr("Lưu key trong HaizFlow")
+        title: qsTr("Lưu key trong ReupMain")
         description: qsTr("Trong Cài đặt → API Key → Gemini, đặt tên key rồi chọn Lưu và sử dụng.")
     }
 

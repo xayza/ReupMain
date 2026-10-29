@@ -34,7 +34,7 @@ Rectangle {
 
             SectionHeader {
                 Layout.fillWidth: true
-                title: "HaizFlow UI Gallery"
+                title: "ReupMain UI Gallery"
                 subtitle: "Foundation controls and feedback states"
             }
 

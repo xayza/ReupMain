@@ -155,7 +155,7 @@ Rectangle {
 
             objectName: "helpButton"
             glyph: "\uE897"
-            toolTipText: qsTr("Thông tin HaizFlow")
+            toolTipText: qsTr("Thông tin ReupMain")
             onPressed: root.helpWasOpenOnPress = helpMenu.visible
             onClicked: {
                 projectMenu.close();

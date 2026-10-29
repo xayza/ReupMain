@@ -15,7 +15,7 @@ AppDialog {
     maximumWidth: 520
 
     function showAlert(alertTitle, message, level) {
-        title = alertTitle || "HaizFlow"
+        title = alertTitle || "ReupMain"
         alertMessage = message || ""
         severity = level || "information"
         open()

@@ -15,7 +15,7 @@ Item {
         while (toastModel.count >= maximumVisible)
             toastModel.remove(0)
         toastModel.append({
-            titleText: String(title || "HaizFlow"),
+            titleText: String(title || "ReupMain"),
             messageText: String(message || ""),
             toneName: String(tone || "info"),
             timeoutMs: Math.max(1600, Number(duration || defaultDuration))

@@ -39,8 +39,8 @@ Popup {
             title: confirmationLoader.requestedState === "ready"
                 ? qsTr("Khởi động lại để cập nhật?") : qsTr("Tải bản cập nhật?")
             message: confirmationLoader.requestedState === "ready"
-                ? qsTr("HaizFlow sẽ đóng và mở lại để áp dụng phiên bản %1. Lưu các thay đổi đang chỉnh sửa trước khi tiếp tục.").arg(confirmationLoader.requestedVersion)
-                : qsTr("Tải và kiểm tra phiên bản %1. HaizFlow sẽ hỏi lại trước khi khởi động lại; dự án và gói tài nguyên được giữ nguyên.").arg(confirmationLoader.requestedVersion)
+                ? qsTr("ReupMain sẽ đóng và mở lại để áp dụng phiên bản %1. Lưu các thay đổi đang chỉnh sửa trước khi tiếp tục.").arg(confirmationLoader.requestedVersion)
+                : qsTr("Tải và kiểm tra phiên bản %1. ReupMain sẽ hỏi lại trước khi khởi động lại; dự án và gói tài nguyên được giữ nguyên.").arg(confirmationLoader.requestedVersion)
             confirmText: confirmationLoader.requestedState === "ready"
                 ? qsTr("Khởi động lại") : qsTr("Tải cập nhật")
             onConfirmed: root.controller.confirmAppUpdate(confirmationLoader.requestedVersion, confirmationLoader.requestedState)
@@ -51,11 +51,11 @@ Popup {
     function updateError(source) {
         const messages = {
             "Dừng hoặc chờ các tác vụ hoàn tất trước khi cập nhật.": qsTr("Dừng hoặc chờ các tác vụ hoàn tất trước khi cập nhật."),
-            "Cập nhật trực tiếp chỉ dùng trong bản HaizFlow đã cài đặt.": qsTr("Cập nhật trực tiếp chỉ dùng trong bản HaizFlow đã cài đặt."),
+            "Cập nhật trực tiếp chỉ dùng trong bản ReupMain đã cài đặt.": qsTr("Cập nhật trực tiếp chỉ dùng trong bản ReupMain đã cài đặt."),
             "Bản phát hành chưa có bộ cài Windows kèm mã kiểm tra. Hãy xem chi tiết cập nhật.": qsTr("Bản phát hành chưa có bộ cài Windows kèm mã kiểm tra. Hãy xem chi tiết cập nhật."),
             "Bộ cài chưa có chữ ký hợp lệ. Không thể cập nhật tự động.": qsTr("Bộ cài chưa có chữ ký hợp lệ. Không thể cập nhật tự động."),
             "Bộ cài tải xuống chưa đầy đủ hoặc mã kiểm tra không khớp. Hãy thử lại.": qsTr("Bộ cài tải xuống chưa đầy đủ hoặc mã kiểm tra không khớp. Hãy thử lại."),
-            "Bộ cài đã đóng. Nếu cập nhật thành công, hãy khởi động lại HaizFlow.": qsTr("Bộ cài đã đóng. Nếu cập nhật thành công, hãy khởi động lại HaizFlow."),
+            "Bộ cài đã đóng. Nếu cập nhật thành công, hãy khởi động lại ReupMain.": qsTr("Bộ cài đã đóng. Nếu cập nhật thành công, hãy khởi động lại ReupMain."),
             "Trạng thái cập nhật đã thay đổi. Kiểm tra lại trước khi xác nhận.": qsTr("Trạng thái cập nhật đã thay đổi. Kiểm tra lại trước khi xác nhận."),
             "Không thể tải bản cập nhật. Kiểm tra kết nối mạng rồi thử lại.": qsTr("Không thể tải bản cập nhật. Kiểm tra kết nối mạng rồi thử lại.")
         };
@@ -141,7 +141,7 @@ Popup {
                     : root.state === "preparing" ? (root.unknownPhaseProgress
                         ? qsTr("Đang chuẩn bị phiên bản mới…")
                         : qsTr("Đang chuẩn bị phiên bản mới · %1%").arg(root.phaseProgress))
-                    : root.state === "restarting" ? qsTr("Đang khởi động lại HaizFlow…")
+                    : root.state === "restarting" ? qsTr("Đang khởi động lại ReupMain…")
                     : qsTr("Bộ cài đã mở. Làm theo hướng dẫn để hoàn tất cập nhật.")
                 color: Theme.textMuted
                 font.family: Theme.fontFamily
@@ -161,8 +161,8 @@ Popup {
             Layout.fillWidth: true
             visible: root.state === "ready" || root.state === "updated" || root.state === "rolled_back"
             text: root.state === "ready" ? qsTr("Đã sẵn sàng. Khởi động lại khi các tác vụ hoàn tất để áp dụng bản cập nhật.")
-                : root.state === "rolled_back" ? qsTr("Không thể mở phiên bản mới. HaizFlow đã khôi phục phiên bản trước.")
-                : qsTr("Đã cập nhật HaizFlow.")
+                : root.state === "rolled_back" ? qsTr("Không thể mở phiên bản mới. ReupMain đã khôi phục phiên bản trước.")
+                : qsTr("Đã cập nhật ReupMain.")
             color: Theme.textMuted
             font.family: Theme.fontFamily
             font.pixelSize: TypeScale.control

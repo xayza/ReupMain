@@ -12,7 +12,7 @@ AppDialog {
     readonly property int qrSize: compactLayout ? 136 : 160
 
     title: qsTr("Giới thiệu")
-    subtitle: qsTr("HaizFlow · Phiên bản %1").arg(root.controller.currentAppVersion)
+    subtitle: qsTr("ReupMain · Phiên bản %1").arg(root.controller.currentAppVersion)
     preferredWidth: 650
     maximumWidth: 680
     maximumHeight: 860
@@ -47,7 +47,7 @@ AppDialog {
                     sourceSize.height: 176
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
-                    Accessible.name: qsTr("Biểu tượng HaizFlow")
+                    Accessible.name: qsTr("Biểu tượng ReupMain")
                 }
 
                 ColumnLayout {
@@ -56,7 +56,7 @@ AppDialog {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "HaizFlow"
+                        text: "ReupMain"
                         color: Theme.text
                         font.family: Theme.fontFamily
                         font.pixelSize: TypeScale.title

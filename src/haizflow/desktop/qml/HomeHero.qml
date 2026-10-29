@@ -95,7 +95,7 @@ Rectangle {
             sourceSize.height: 164
             fillMode: Image.PreserveAspectFit
             asynchronous: true
-            Accessible.name: qsTr("Biểu tượng HaizFlow")
+            Accessible.name: qsTr("Biểu tượng ReupMain")
         }
     }
 }

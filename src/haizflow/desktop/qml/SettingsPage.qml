@@ -94,7 +94,7 @@ Item {
                 title: qsTr("Ứng dụng")
                 SettingRow {
                     Layout.fillWidth: true
-                    label: qsTr("Cập nhật HaizFlow")
+                    label: qsTr("Cập nhật ReupMain")
                     description: AppController.appUpdateState === "available"
                         ? qsTr("Phiên bản %1 đã sẵn sàng.").arg(AppController.latestAppVersion)
                         : AppController.appUpdateState === "checking" ? qsTr("Đang kiểm tra phiên bản mới…")

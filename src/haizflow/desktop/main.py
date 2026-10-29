@@ -132,7 +132,7 @@ def main(*, smoke_test: bool = False) -> None:
     # type graph, and feeding those events through QInputMethod can recursively
     # re-enter PySide before a window exists.
     input_method_commit_filter = InputMethodCommitFilter(app)
-    app.setApplicationName("HaizFlow")
+    app.setApplicationName("ReupMain")
     app.setApplicationDisplayName("\u200B")
     install_ui_translator(desktop_settings.load_settings().get("language", "vi"))
     app_icon_path = _app_icon_path()
@@ -240,8 +240,8 @@ def main(*, smoke_test: bool = False) -> None:
         if not smoke_test:
             QMessageBox.critical(
                 None,
-                "HaizFlow",
-                "HaizFlow không thể mở giao diện. Chi tiết đã được lưu trong log kỹ thuật.\n\n"
+                "ReupMain",
+                "ReupMain không thể mở giao diện. Chi tiết đã được lưu trong log kỹ thuật.\n\n"
                 + str(exc),
             )
         raise
