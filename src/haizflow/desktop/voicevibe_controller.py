@@ -70,19 +70,37 @@ class VoiceVibeController(QObject):
     def previewPath(self):
         return self._preview_path
 
-    @Slot(str, result="QVariantList")
-    def linkedVoices(self, provider):
+    @staticmethod
+    def _normalize_language(language):
+        """Tab language for TTS: 'en' for English, otherwise Vietnamese.
+
+        Previously the tab hardcoded 'vi' here, so even an English script
+        read through OmniVoice came out as Vietnamese. The language now
+        comes from the tab's language selector, never from a hardcoded value.
+        """
+        lang = str(language or "vi").strip().lower()
+        if lang.startswith("en"):
+            return "en"
+        if lang.startswith("zh"):
+            return "zh"
+        return "vi"
+
+    @Slot(str, str, result="QVariantList")
+    def linkedVoices(self, provider, language="vi"):
         """Voices straight from the main app catalog, not a copy in this tab.
 
         The host controller owns the catalog and the resource-pack state, so
         installing a pack in Settings immediately changes what this returns.
+        The language argument matters: asking for 'en' returns the English
+        catalog (OmniVoice / Edge en-US), not the Vietnamese one.
         """
         host = self._host
+        lang = self._normalize_language(language)
         try:
-            return host.voiceOptionsForLanguageAndProvider("vi", str(provider or "edge"))
+            return host.voiceOptionsForLanguageAndProvider(lang, str(provider or "edge"))
         except Exception:
             try:
-                return host._voice_options_for_language("vi", str(provider or "edge"))
+                return host._voice_options_for_language(lang, str(provider or "edge"))
             except Exception:
                 return []
 
@@ -147,7 +165,7 @@ class VoiceVibeController(QObject):
         except Exception as exc:  # noqa: BLE001 - surfaced to the user in-app
             self._set(status=f"Tạo nghe thử thất bại: {exc} Kiểm tra internet rồi thử lại.", busy=False)
 
-    def _run_local_preview(self, text, voice, provider):
+    def _run_local_preview(self, text, voice, provider, language="vi"):
         try:
             from haizflow.pipeline.tts import generate_single_voice
 
@@ -155,7 +173,12 @@ class VoiceVibeController(QObject):
             os.close(fd)
             self._preview_path = tmp
             # video_id rong: tab khong thuoc ve du an nao, pipeline chi dung no de ghi log.
-            generate_single_voice(text, tmp, voice, "", provider=provider, target_language="vi")
+            # Ngon ngu lay tu o chon ngon ngu cua tab, KHONG ghi cung "vi" nua:
+            # tieng Anh qua OmniVoice phai chay target_language="en" moi doc tieng Anh.
+            generate_single_voice(
+                text, tmp, voice, "", provider=provider,
+                target_language=self._normalize_language(language),
+            )
             if not os.path.exists(tmp) or os.path.getsize(tmp) == 0:
                 raise RuntimeError("File nghe thử trống.")
             self._set(status="Đã tạo xong bản nghe thử. Bấm “Nghe thử trong app” trước khi tải xuống.", busy=False, preview=tmp)
@@ -171,8 +194,8 @@ class VoiceVibeController(QObject):
     def generatePreview(self, text, voice, rate="", pitch="", volume=""):
         self.generatePreviewWithProvider(text, voice, "edge", rate, pitch, volume)
 
-    @Slot(str, str, str, str, str, str)
-    def generatePreviewWithProvider(self, text, voice, provider="edge", rate="", pitch="", volume=""):
+    @Slot(str, str, str, str, str, str, str)
+    def generatePreviewWithProvider(self, text, voice, provider="edge", rate="", pitch="", volume="", language="vi"):
         text = str(text or "").strip()
         if self._busy:
             return
@@ -180,18 +203,22 @@ class VoiceVibeController(QObject):
             self._set(status="Hãy nhập văn bản trước đã.")
             return
         if not voice:
-            self._set(status="Chưa chọn được giọng nào. Hãy chọn nhà cung cấp rồi chọn 1 giọng trong danh sách.")
+            self._set(status="Chưa chọn được giọng nào. Hãy chọn ngôn ngữ, chọn nhà cung cấp rồi chọn 1 giọng trong danh sách.")
             return
         provider = str(provider or "edge").strip().lower()
+        language = self._normalize_language(language)
         self._set(status="Đang tạo bản nghe thử...", busy=True)
         if provider == "edge":
+            # Edge: giong da mang ma ngon ngu trong ten (vi-VN-..., en-US-...),
+            # danh sach giong da duoc loc theo ngon ngu o linkedVoices, nen khong
+            # can truyen them ngon ngu vao day.
             threading.Thread(
                 target=self._run_preview,
                 args=(text, voice, _parse_rate(rate), _parse_pitch(pitch), _parse_rate(volume)),
                 daemon=True,
             ).start()
         else:
-            threading.Thread(target=self._run_local_preview, args=(text, voice, provider), daemon=True).start()
+            threading.Thread(target=self._run_local_preview, args=(text, voice, provider, language), daemon=True).start()
 
     @Slot(str)
     def savePreview(self, output_path):

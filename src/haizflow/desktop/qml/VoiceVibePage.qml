@@ -46,11 +46,18 @@ Item {
         onAccepted: referenceField.text = selectedFile.toString().replace("file:///", "")
     }
 
+    function currentLanguage() {
+        // "Tiếng Việt" -> "vi", "Tiếng Anh" -> "en". Khong ghi cung "vi" nua:
+        // truoc day tab luon goi linkedVoices(provider) mac dinh "vi" nen
+        // van ban tieng Anh qua OmniVoice van bi doc theo tieng Viet.
+        return languageCombo.currentText && languageCombo.currentText.indexOf("Tiếng Anh") === 0 ? "en" : "vi"
+    }
+
     function refreshVoices() {
-        if (!providerCombo || !voiceCombo || !root.voice)
+        if (!providerCombo || !voiceCombo || !languageCombo || !root.voice)
             return
         var provider = providerCombo.currentValue ? providerCombo.currentValue : "edge"
-        var options = root.voice.linkedVoices(provider)
+        var options = root.voice.linkedVoices(provider, root.currentLanguage())
         packStatus.text = root.voice.linkedPackStatus(provider)
         voiceListModel.clear()
         for (var i = 0; i < options.length; i++) {
@@ -128,11 +135,18 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    text: qsTr("Nhà cung cấp giọng: Edge là giọng online, VieNeu là 25 giọng Việt local, OmniVoice là giọng local đã cài trong Gói tài nguyên. Danh sách giọng dưới đây lấy trực tiếp từ app chính, không phải danh sách riêng của tab này — cài gói xong là giọng tự hiện, gỡ gói là giọng tự mất. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
+                    text: qsTr("Chọn đúng ngôn ngữ của văn bản trước khi chọn giọng. Tiếng Việt thì dùng VieNeu, tiếng Anh thì dùng OmniVoice hoặc Edge en-US. Đừng chọn OmniVoice cho văn bản tiếng Việt, và đừng chọn VieNeu cho văn bản tiếng Anh. Danh sách giọng dưới đây lấy trực tiếp từ app chính theo ngôn ngữ đã chọn, không phải danh sách riêng của tab này — cài gói xong là giọng tự hiện, gỡ gói là giọng tự mất. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: TypeScale.control
                     wrapMode: Text.WordWrap
+                }
+
+                ComboBox {
+                    id: languageCombo
+                    Layout.fillWidth: true
+                    model: [qsTr("Tiếng Việt"), qsTr("Tiếng Anh")]
+                    onCurrentIndexChanged: root.refreshVoices()
                 }
 
                 ComboBox {
@@ -179,7 +193,7 @@ Item {
                     AppButton {
                         text: qsTr("Tạo nghe thử")
                         enabled: root.voice && !root.voice.busy && voiceText.text.length > 0
-                        onClicked: root.voice.generatePreviewWithProvider(voiceText.text, voiceCombo.currentValue ? voiceCombo.currentValue : "", providerCombo.currentValue ? providerCombo.currentValue : "edge", rateCombo.currentText, "+0Hz", "+0%")
+                        onClicked: root.voice.generatePreviewWithProvider(voiceText.text, voiceCombo.currentValue ? voiceCombo.currentValue : "", providerCombo.currentValue ? providerCombo.currentValue : "edge", rateCombo.currentText, "+0Hz", "+0%", root.currentLanguage())
                     }
                     AppButton {
                         text: qsTr("Nghe thử trong app")
