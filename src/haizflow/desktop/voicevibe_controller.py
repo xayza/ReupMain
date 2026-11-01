@@ -240,11 +240,19 @@ class VoiceVibeController(QObject):
 
             fd, tmp = tempfile.mkstemp(suffix=".mp3", prefix="voicevibe_preview_")
             os.close(fd)
-            # video_id rong: tab khong thuoc ve du an nao, pipeline chi dung no de ghi log.
+            # video_id KHONG DUOC DE RONG: pipeline goi get_video(video_id)
+            # -> _find_video_dir -> _legacy_video_dir, ma ham do chi chap
+            # nhan [A-Za-z0-9_-]{1,128}, chuoi rong se nem ValueError
+            # "Invalid video identity." ngay truoc khi tong hop, dung nhu loi
+            # Sếp gap voi omnivoice-gpu. Tab khong thuoc ve du an nao, nen
+            # dung mot id rieng cua tab, hop le theo regex tren, khong tao
+            # du an that: get_video se tra None, log_to_video se tu bo qua
+            # vi khong co video.json tuong ung, con worker thi dung id nay
+            # lam khoa process registry binh thuong.
             # Ngon ngu lay tu o chon ngon ngu cua tab, KHONG ghi cung "vi" nua:
             # tieng Anh qua OmniVoice phai chay target_language="en" moi doc tieng Anh.
             generate_single_voice(
-                text, tmp, voice, "", provider=provider,
+                text, tmp, voice, "voicevibe-preview", provider=provider,
                 target_language=self._normalize_language(language),
             )
             if not os.path.exists(tmp) or os.path.getsize(tmp) < 512:
@@ -259,6 +267,7 @@ class VoiceVibeController(QObject):
             self._set(
                 status=f"Giọng {provider} / {voice} / ngôn ngữ {self._normalize_language(language)} chưa tạo được trong tab này: {exc} "
                        f"Nếu gói {provider} đang tải dở thì đợi tải xong rồi thử lại. "
+                       f"Nếu chọn bản -gpu mà vẫn lỗi, hãy thử bản CPU cùng nhà cung cấp đó để tách lỗi VRAM. "
                        f"Nếu vẫn lỗi, hãy thử một câu ngắn trước để tách lỗi model với lỗi văn bản dài, "
                        f"hoặc dùng giọng này trong dự án Tự động/Thủ công của app.",
                 busy=False,
