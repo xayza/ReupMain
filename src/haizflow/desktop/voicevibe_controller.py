@@ -54,7 +54,7 @@ class VoiceVibeController(QObject):
     def __init__(self, host, parent=None):
         super().__init__(parent)
         self._host = host
-        self._status = "Nhap text, chon giong, bam Tao nghe thu."
+        self._status = "Nhập văn bản, chọn giọng, bấm Tạo nghe thử."
         self._busy = False
         self._preview_path = ""
 
@@ -84,18 +84,29 @@ class VoiceVibeController(QObject):
             import edge_tts
 
             async def _gen():
-                communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch, volume=volume)
-                await communicate.save(self._preview_path)
+                # Cach goi giong HaizFlow: khong truyen rate/pitch/volume vao Communicate,
+                # vi cac tham so nay de gay loi "No audio was received" tren mot so ban edge-tts.
+                # Chi stream packet audio va kiem tra co nhan duoc audio that khong.
+                communicate = edge_tts.Communicate(text, voice, connect_timeout=10, receive_timeout=20)
+                received = 0
+                with open(self._preview_path, "wb") as stream:
+                    async for packet in communicate.stream():
+                        if packet.get("type") == "audio":
+                            data = packet.get("data") or b""
+                            stream.write(data)
+                            received += len(data)
+                if received == 0:
+                    raise RuntimeError("Không nhận được audio từ Edge. Hãy thử lại, đổi giọng khác, hoặc rút ngắn văn bản.")
 
             fd, tmp = tempfile.mkstemp(suffix=".mp3", prefix="voicevibe_preview_")
             os.close(fd)
             self._preview_path = tmp
             asyncio.run(_gen())
             if not os.path.exists(tmp) or os.path.getsize(tmp) == 0:
-                raise RuntimeError("File nghe thu rong.")
-            self._set(status=f"Da tao xong ban nghe thu. Bam Nghe thu trong app truoc khi tai.", busy=False, preview=tmp)
+                raise RuntimeError("File nghe thử trống. Hãy thử lại.")
+            self._set(status="Đã tạo xong bản nghe thử. Bấm “Nghe thử trong app” trước khi tải xuống.", busy=False, preview=tmp)
         except Exception as exc:  # noqa: BLE001 - surfaced to the user in-app
-            self._set(status=f"Tao nghe thu that bai: {exc}. Can internet cho giong Edge.", busy=False)
+            self._set(status=f"Tạo nghe thử thất bại: {exc} Kiểm tra internet rồi thử lại.", busy=False)
 
     @Slot(str, str, str, str, str)
     def generatePreview(self, text, voice, rate="", pitch="", volume=""):
@@ -103,11 +114,11 @@ class VoiceVibeController(QObject):
         if self._busy:
             return
         if not text:
-            self._set(status="Nhap text truoc.")
+            self._set(status="Hãy nhập văn bản trước đã.")
             return
         if not voice:
             voice = EDGE_VOICES[0]
-        self._set(status="Dang tao ban nghe thu...", busy=True)
+        self._set(status="Đang tạo bản nghe thử...", busy=True)
         threading.Thread(
             target=self._run_preview,
             args=(text, voice, _parse_rate(rate), _parse_pitch(pitch), _parse_rate(volume)),
@@ -118,34 +129,34 @@ class VoiceVibeController(QObject):
     def savePreview(self, output_path):
         output_path = str(output_path or "").strip()
         if not self._preview_path or not os.path.exists(self._preview_path):
-            self._set(status="Chua co ban nghe thu. Hay bam Tao nghe thu truoc.")
+            self._set(status="Chưa có bản nghe thử. Hãy bấm Tạo nghe thử trước.")
             return
         if not output_path:
-            self._set(status="Chon cho de xuat file truoc.")
+            self._set(status="Hãy chọn chỗ để xuất file trước.")
             return
         try:
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(self._preview_path, output_path)
-            self._set(status=f"Da xuat file: {output_path}")
+            self._set(status=f"Đã xuất file: {output_path}")
         except Exception as exc:  # noqa: BLE001
-            self._set(status=f"Xuat file that bai: {exc}")
+            self._set(status=f"Xuất file thất bại: {exc}")
 
     @Slot(str, str, str, str, bool)
     def convertPreview(self, source, reference, model="seed-vc", mode="light", singing=False):
         source = str(source or "").strip()
         reference = str(reference or "").strip()
         if not source or not reference:
-            self._set(status="Can ca file goc va file giong mau.")
+            self._set(status="Cần cả file gốc và file giọng mẫu.")
             return
         if model == "seed-vc":
             script = Path("models") / "seed-vc" / "inference_v2.py"
             if not script.exists():
-                self._set(status="Chua cai Seed-VC. Vao tab Model cua app hoac cai tu github.com/Plachtaa/seed-vc vao models/seed-vc.")
+                self._set(status="Chưa cài Seed-VC. Hãy cài từ github.com/Plachtaa/seed-vc vào thư mục models/seed-vc.")
                 return
             steps = 40 if singing else VC_PRESETS.get(mode, VC_PRESETS["light"])["seed_vc_diffusion_steps"]
             fd, tmp = tempfile.mkstemp(suffix=".wav", prefix="voicevibe_vc_preview_")
             os.close(fd)
-            self._set(status="Dang doi giong...", busy=True)
+            self._set(status="Đang đổi giọng...", busy=True)
 
             def _run():
                 try:
@@ -154,10 +165,10 @@ class VoiceVibeController(QObject):
                          "--output", tmp, "--diffusion-steps", str(steps)],
                         check=True,
                     )
-                    self._set(status="Da doi giong xong ban nghe thu.", busy=False, preview=tmp)
+                    self._set(status="Đã đổi giọng xong bản nghe thử.", busy=False, preview=tmp)
                 except Exception as exc:  # noqa: BLE001
-                    self._set(status=f"Doi giong that bai: {exc}", busy=False)
+                    self._set(status=f"Đổi giọng thất bại: {exc}", busy=False)
 
             threading.Thread(target=_run, daemon=True).start()
         else:
-            self._set(status=f"Model {model} can file .pth trong models/{model}/. Dat file vao do roi thu lai.")
+            self._set(status=f"Model {model} cần file .pth trong models/{model}/. Đặt file vào đó rồi thử lại.")
