@@ -49,6 +49,7 @@ from haizflow.desktop.media import (
 )
 from haizflow.desktop.media_download_controller import MediaDownloadController
 from haizflow.desktop.reup_thuan_controller import ReupThuanController
+from haizflow.desktop.voicevibe_controller import VoiceVibeController
 from haizflow.desktop.media_probe import VideoDimensionProbe
 from haizflow.desktop.models import (
     ActivityEventModel,
@@ -430,6 +431,7 @@ class HaizFlowController(QObject):
         self._audio_preview = AudioPreviewController(self)
         self._media_downloader = MediaDownloadController(self)
         self._reup_thuan = ReupThuanController(self, self)
+        self._voice_vibe = VoiceVibeController(self, self)
         self._tiktok_publisher = SocialPublishController(self)
         self._settings_controller = SettingsController(self)
         self._project_workspace = ProjectWorkspaceController(self)
@@ -1211,6 +1213,10 @@ class HaizFlowController(QObject):
     @Property(QObject, constant=True)
     def reupThuan(self):
         return self._reup_thuan
+
+    @Property(QObject, constant=True)
+    def voiceVibe(self):
+        return self._voice_vibe
 
     @Property(bool, notify=mediaImportChanged)
     def mediaImportBusy(self):

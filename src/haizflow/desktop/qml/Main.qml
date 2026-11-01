@@ -39,6 +39,7 @@ ApplicationWindow {
     readonly property string routePublishWorkspace: "publish-workspace"
     readonly property string routeReupProjects: "reup-projects"
     readonly property string routeReupWorkspace: "reup-workspace"
+    readonly property string routeVoiceVibe: "voicevibe"
     property string currentRoute: routeHome
     property string workspaceReturnRoute: routeHome
     property var routeHistory: [routeHome]
@@ -116,6 +117,8 @@ ApplicationWindow {
             return "social";
         if (currentRoute === routeReupProjects || currentRoute === routeReupWorkspace)
             return "reup";
+        if (currentRoute === routeVoiceVibe)
+            return "voicevibe";
         return "home";
     }
 
@@ -131,7 +134,7 @@ ApplicationWindow {
     }
 
     function routeIsAvailable(route) {
-        if (route === routeHome || route === routeProjects || route === routeSettings || route === routeApiKeys || route === routePackages || route === routeSingleProjects || route === routeManualProjects || route === routeBatchProjects || route === routeDownloadProjects || route === routePublishProjects || route === routeReupProjects)
+        if (route === routeHome || route === routeProjects || route === routeSettings || route === routeApiKeys || route === routePackages || route === routeSingleProjects || route === routeManualProjects || route === routeBatchProjects || route === routeDownloadProjects || route === routePublishProjects || route === routeReupProjects || route === routeVoiceVibe)
             return true;
         if (!AppController.hasOpenProject)
             return false;
@@ -544,6 +547,8 @@ ApplicationWindow {
                         root.navigate(root.routePublishProjects);
                     else if (section === "reup")
                         root.navigate(root.routeReupProjects);
+                    else if (section === "voicevibe")
+                        root.navigate(root.routeVoiceVibe);
                     else
                         root.navigate(root.routeHome);
                 }

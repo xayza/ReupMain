@@ -73,7 +73,8 @@ Rectangle {
                 { key: "batch", label: qsTr("Hàng loạt"), icon: "projects" },
                 { key: "downloads", label: qsTr("Tải xuống"), icon: "download" },
                 { key: "social", label: qsTr("Đăng mạng xã hội"), icon: "share" },
-                { key: "reup", label: qsTr("Reup Thuần"), icon: "share" }
+                { key: "reup", label: qsTr("Reup Thuần"), icon: "share" },
+                { key: "voicevibe", label: qsTr("VoiceVibe"), icon: "play" }
             ]
 
             delegate: Control {

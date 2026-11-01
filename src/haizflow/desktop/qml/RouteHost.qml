@@ -37,6 +37,7 @@ StackLayout {
             "publish-workspace": 10,
             "reup-projects": 14,
             "reup-workspace": 15,
+            "voicevibe": 16,
             "home": 11,
             "projects": 12,
             "settings": 13,
@@ -309,6 +310,16 @@ StackLayout {
         asynchronous: true
         sourceComponent: Component {
             ReupThuanPage {}
+        }
+    }
+    Loader {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.margins: 0
+        active: root.currentRoute === "voicevibe"
+        asynchronous: true
+        sourceComponent: Component {
+            VoiceVibePage {}
         }
     }
 
