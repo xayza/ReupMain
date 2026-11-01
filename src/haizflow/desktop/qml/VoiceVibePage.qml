@@ -61,11 +61,16 @@ Item {
         // se toan giong Viet (Hai Dang, Truc Ly...) vi VieNeu chi co giong
         // Viet. Tu chuyen sang OmniVoice (index 2 trong danh sach co dinh:
         // 0 VieNeu GPU, 1 VieNeu, 2 OmniVoice, 3 OmniVoice GPU, 4 Edge).
-        // Doi currentIndex se goi lai refreshVoices mot lan nua voi
-        // OmniVoice, roi dung lai, khong lap vo han.
+        // QUAN TRONG: phai doi provider VA tai lai danh sach giong NGAY
+        // TRONG CUNG LAN GOI NAY, khong duoc return cho doi signal
+        // onCurrentIndexChanged goi lai refreshVoices, vi thuc te tren may
+        // cua Sếp signal do khong chay lai: o nha cung cap thi da hien
+        // OmniVoice, nhung o giong van ket Hai Dang va dong trang thai van
+        // hien "vieneu: installed". Neu signal co chay lai thi lan sau
+        // provider da la omnivoice nen khong chuyen nua, khong lap vo han.
         if (root.currentLanguage() === "en" && provider.indexOf("vieneu") === 0) {
+            provider = "omnivoice"
             providerCombo.currentIndex = 2
-            return
         }
         var options = root.voice.linkedVoices(provider, root.currentLanguage())
         packStatus.text = root.voice.linkedPackStatus(provider)
