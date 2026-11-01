@@ -70,6 +70,45 @@ class VoiceVibeController(QObject):
     def previewPath(self):
         return self._preview_path
 
+    @Slot(str, result="QVariantList")
+    def linkedVoices(self, provider):
+        """Voices straight from the main app catalog, not a copy in this tab.
+
+        The host controller owns the catalog and the resource-pack state, so
+        installing a pack in Settings immediately changes what this returns.
+        """
+        host = self._host
+        try:
+            return host.voiceOptionsForLanguageAndProvider("vi", str(provider or "edge"))
+        except Exception:
+            try:
+                return host._voice_options_for_language("vi", str(provider or "edge"))
+            except Exception:
+                return []
+
+    @Slot(str, result=str)
+    def linkedPackStatus(self, provider):
+        """One-line pack status for a provider, from the main app's pack rows."""
+        host = self._host
+        try:
+            rows = host.resourcePackageRows or []
+        except Exception:
+            rows = []
+        provider = str(provider or "").lower()
+        want = "vieneu" if "vieneu" in provider else "omnivoice" if "omnivoice" in provider else "edge"
+        if want == "edge":
+            return "Edge: giọng online, không cần gói tài nguyên."
+        for row in rows:
+            if isinstance(row, dict):
+                text = " ".join(str(v) for v in row.values())
+                if want in text.lower():
+                    name = row.get("name") or row.get("title") or row.get("id") or want
+                    status = row.get("status") or row.get("state") or ""
+                    return f"{name}: {status}".strip()
+            elif want in str(row).lower():
+                return str(row)
+        return f"Chưa thấy gói {want} trong Gói tài nguyên. Hãy vào Cài đặt > Gói tài nguyên để cài."
+
     def _set(self, status=None, busy=None, preview=None):
         if status is not None:
             self._status = status

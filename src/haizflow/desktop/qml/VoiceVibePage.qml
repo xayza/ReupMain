@@ -103,8 +103,18 @@ Item {
                 }
 
                 Text {
+                    id: packStatus
                     Layout.fillWidth: true
-                    text: qsTr("Nhà cung cấp giọng: Edge là giọng online, VieNeu là 25 giọng Việt local, OmniVoice là giọng local đã cài trong Gói tài nguyên. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
+                    text: qsTr("Đang liên kết với Gói tài nguyên của app...")
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: TypeScale.control
+                    wrapMode: Text.WordWrap
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("Nhà cung cấp giọng: Edge là giọng online, VieNeu là 25 giọng Việt local, OmniVoice là giọng local đã cài trong Gói tài nguyên. Danh sách giọng dưới đây lấy trực tiếp từ app chính, không phải danh sách riêng của tab này — cài gói xong là giọng tự hiện, gỡ gói là giọng tự mất. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: TypeScale.control
@@ -123,7 +133,8 @@ Item {
 
                 function refreshVoices() {
                     var provider = providerCombo.currentValue ? providerCombo.currentValue : "edge"
-                    var options = AppController.voiceOptionsForLanguageAndProvider("vi", provider)
+                    var options = root.voice.linkedVoices(provider)
+                    packStatus.text = root.voice.linkedPackStatus(provider)
                     var names = []
                     var values = []
                     for (var i = 0; i < options.length; i++) {
