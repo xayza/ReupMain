@@ -57,6 +57,16 @@ Item {
         if (!providerCombo || !voiceCombo || !languageCombo || !root.voice)
             return
         var provider = providerCombo.currentValue ? providerCombo.currentValue : "edge"
+        // Khi chon Tieng Anh ma nha cung cap van la VieNeu, danh sach giong
+        // se toan giong Viet (Hai Dang, Truc Ly...) vi VieNeu chi co giong
+        // Viet. Tu chuyen sang OmniVoice (index 2 trong danh sach co dinh:
+        // 0 VieNeu GPU, 1 VieNeu, 2 OmniVoice, 3 OmniVoice GPU, 4 Edge).
+        // Doi currentIndex se goi lai refreshVoices mot lan nua voi
+        // OmniVoice, roi dung lai, khong lap vo han.
+        if (root.currentLanguage() === "en" && provider.indexOf("vieneu") === 0) {
+            providerCombo.currentIndex = 2
+            return
+        }
         var options = root.voice.linkedVoices(provider, root.currentLanguage())
         packStatus.text = root.voice.linkedPackStatus(provider)
         voiceListModel.clear()
@@ -146,7 +156,7 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    text: qsTr("Chọn đúng ngôn ngữ của văn bản trước khi chọn giọng. Tiếng Việt thì dùng VieNeu, tiếng Anh thì dùng OmniVoice hoặc Edge en-US. Đừng chọn OmniVoice cho văn bản tiếng Việt, và đừng chọn VieNeu cho văn bản tiếng Anh. Danh sách giọng dưới đây lấy trực tiếp từ app chính theo ngôn ngữ đã chọn, không phải danh sách riêng của tab này — cài gói xong là giọng tự hiện, gỡ gói là giọng tự mất. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
+                    text: qsTr("Chọn đúng ngôn ngữ của văn bản trước khi chọn giọng. Tiếng Việt thì dùng VieNeu, tiếng Anh thì dùng OmniVoice hoặc Edge en-US. Khi chọn Tiếng Anh, tab tự chuyển nhà cung cấp sang OmniVoice, vì VieNeu chỉ có giọng Việt, nếu để VieNeu thì danh sách giọng sẽ toàn giọng Việt. Danh sách giọng dưới đây lấy trực tiếp từ app chính theo ngôn ngữ đã chọn, không phải danh sách riêng của tab này — cài gói xong là giọng tự hiện, gỡ gói là giọng tự mất. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
                     color: Theme.textMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: TypeScale.control

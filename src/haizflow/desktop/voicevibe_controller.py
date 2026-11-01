@@ -96,8 +96,17 @@ class VoiceVibeController(QObject):
         """
         host = self._host
         lang = self._normalize_language(language)
+        provider = str(provider or "edge").strip().lower()
+        # QUAN TRONG: danh muc VieNeu cua app chinh tra ve giong Viet cho moi
+        # ngon ngu (tru tieng Trung), ke ca khi language="en". Neu tra nguyen
+        # danh sach do ve cho tab tieng Anh, nguoi dung se thay toan giong
+        # Viet (Hai Dang, Truc Ly...) va tuong la tab loi, dung nhu anh trong
+        # bao cao. VieNeu chi doc tieng Viet, nen voi tieng Anh thi khong tra
+        # giong Viet nao ca — giao dien se tu chuyen sang OmniVoice.
+        if lang == "en" and provider.startswith("vieneu"):
+            return []
         try:
-            return host.voiceOptionsForLanguageAndProvider(lang, str(provider or "edge"))
+            return host.voiceOptionsForLanguageAndProvider(lang, provider)
         except Exception:
             try:
                 return host._voice_options_for_language(lang, str(provider or "edge"))
