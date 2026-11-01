@@ -17,7 +17,9 @@ Item {
     MediaPlayer {
         id: player
         audioOutput: AudioOutput {}
-        source: root.voice ? root.voice.previewPath : ""
+        // previewPath la duong dan Windows thuan (C:\...), phai doi sang file:// URL
+        // thi MediaPlayer moi mo duoc. Neu de nguyen, QML se hieu la duong dan tuong doi va khong phat ra tieng.
+        source: root.voice && root.voice.previewPath.length > 0 ? "file:///" + root.voice.previewPath.replace("\\", "/") : ""
     }
 
     FileDialog {
