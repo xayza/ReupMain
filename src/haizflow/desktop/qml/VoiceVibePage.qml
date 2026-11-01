@@ -65,6 +65,17 @@ Item {
         }
         if (voiceListModel.count > 0)
             voiceCombo.currentIndex = 0
+        // Canh bao combo sai ngay tren giao dien, dung de nguoi dung phai
+        // cho worker chay moi biet: VieNeu khong doc tieng Anh, giong clone
+        // can file mau ma tab doc van ban khong co.
+        if (comboWarning) {
+            if (root.currentLanguage() === "en" && provider.indexOf("vieneu") === 0)
+                comboWarning.text = qsTr("VieNeu chỉ đọc tiếng Việt. Để đọc tiếng Anh, hãy chọn OmniVoice hoặc Edge.")
+            else if (voiceCombo.currentValue === "omnivoice:clone" || voiceCombo.currentValue === "vieneu:clone")
+                comboWarning.text = qsTr("Giọng nhân bản cần file giọng mẫu, chưa dùng được ở phần đọc văn bản này. Hãy chọn một giọng có sẵn khác.")
+            else
+                comboWarning.text = ""
+        }
     }
 
     Component.onCompleted: root.refreshVoices()
@@ -162,6 +173,16 @@ Item {
                     id: voiceListModel
                 }
 
+                Text {
+                    id: comboWarning
+                    Layout.fillWidth: true
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: TypeScale.control
+                    wrapMode: Text.WordWrap
+                    visible: text.length > 0
+                }
+
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.space12
@@ -192,7 +213,7 @@ Item {
                     spacing: Theme.space12
                     AppButton {
                         text: qsTr("Tạo nghe thử")
-                        enabled: root.voice && !root.voice.busy && voiceText.text.length > 0
+                        enabled: root.voice && !root.voice.busy && voiceText.text.length > 0 && voiceCombo.count > 0
                         onClicked: root.voice.generatePreviewWithProvider(voiceText.text, voiceCombo.currentValue ? voiceCombo.currentValue : "", providerCombo.currentValue ? providerCombo.currentValue : "edge", rateCombo.currentText, "+0Hz", "+0%", root.currentLanguage())
                     }
                     AppButton {

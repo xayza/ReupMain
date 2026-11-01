@@ -122,9 +122,14 @@ class VoiceVibeController(QObject):
                 if want in text.lower():
                     name = row.get("name") or row.get("title") or row.get("id") or want
                     status = row.get("status") or row.get("state") or ""
-                    return f"{name}: {status}".strip()
+                    if status:
+                        return f"{name}: {status}".strip()
+                    # Khong stringify ca row (truoc day hien "vieneu: inventory"
+                    # rat kho hieu). Chi bao la co trong Goi tai nguyen, de nguoi
+                    # dung mo Cai dat > Goi tai nguyen xem da tai xong chua.
+                    return f"{name}: có trong Gói tài nguyên — mở Cài đặt > Gói tài nguyên để xem đã tải xong chưa."
             elif want in str(row).lower():
-                return str(row)
+                return f"{want}: có trong Gói tài nguyên — mở Cài đặt > Gói tài nguyên để xem đã tải xong chưa."
         return f"Chưa thấy gói {want} trong Gói tài nguyên. Hãy vào Cài đặt > Gói tài nguyên để cài."
 
     def _set(self, status=None, busy=None, preview=None):
@@ -136,7 +141,56 @@ class VoiceVibeController(QObject):
             self._preview_path = preview
         self.changed.emit()
 
+    def _validate_combo(self, voice, provider, language):
+        """Block voice/provider/language mismatches BEFORE any synthesis.
+
+        These mismatches used to fail silently or misleadingly:
+        - VieNeu + tieng Anh: VieNeu chi doc tieng Viet, pipeline khong chan
+          combo nay (chi chan tieng Trung), nen tieng Anh se bi doc lech.
+        - Giong khong dung nha cung cap (vi du giong vieneu: trong khi provider
+          la omnivoice, do danh sach giong refresh cham): pipeline
+          normalize_voice se am tham doi thanh omnivoice:female, nguoi dung
+          nghe giong khac ma tuong la loi.
+        - Giong clone ma khong co file mau: pipeline se bao loi, tab nay
+          khong co cho chon file mau cho phan doc van ban.
+        - Ban -gpu tren may khong co GPU: worker se dung o cuda:0.
+        Tra ve thong bao loi ro rang, hoac None neu hop le.
+        """
+        voice = str(voice or "").strip()
+        provider = str(provider or "").strip().lower()
+        language = self._normalize_language(language)
+        if voice in {"omnivoice:clone", "vieneu:clone"}:
+            return ("Giọng nhân bản cần file giọng mẫu, tab này chưa hỗ trợ cho phần đọc văn bản. "
+                    "Hãy chọn một giọng có sẵn khác, hoặc dùng giọng nhân bản trong dự án Tự động/Thủ công của app.")
+        if language == "en" and provider.startswith("vieneu"):
+            return ("VieNeu chỉ đọc tiếng Việt, không đọc tiếng Anh. "
+                    "Để đọc tiếng Anh, hãy chọn OmniVoice hoặc Edge, hoặc đổi ngôn ngữ về Tiếng Việt.")
+        if provider.startswith("omnivoice") and not voice.startswith("omnivoice:"):
+            return (f"Giọng '{voice}' không thuộc OmniVoice, có thể do danh sách giọng chưa kịp tải lại sau khi đổi nhà cung cấp. "
+                    "Hãy chọn lại nhà cung cấp rồi chọn lại giọng trong danh sách, sau đó bấm Tạo nghe thử lại.")
+        if provider.startswith("vieneu") and not voice.startswith("vieneu:"):
+            return (f"Giọng '{voice}' không thuộc VieNeu, có thể do danh sách giọng chưa kịp tải lại sau khi đổi nhà cung cấp. "
+                    "Hãy chọn lại nhà cung cấp rồi chọn lại giọng trong danh sách, sau đó bấm Tạo nghe thử lại.")
+        if provider == "edge":
+            expected = {"vi": "vi-VN-", "en": "en-US-", "zh": "zh-CN-"}.get(language, "")
+            if expected and not voice.startswith(expected):
+                return (f"Giọng Edge '{voice}' không khớp ngôn ngữ {language}. "
+                        "Hãy chọn lại ngôn ngữ rồi chọn lại giọng trong danh sách.")
+        if provider.endswith("-gpu"):
+            try:
+                gpu_available = self._host._project_gpu_available()
+            except Exception:
+                gpu_available = True
+            if gpu_available is False:
+                return ("Máy này không có GPU nên không chạy được bản -gpu. "
+                        "Hãy chọn bản CPU cùng nhà cung cấp đó (ví dụ OmniVoice thay vì OmniVoice GPU).")
+        return None
+
     def _run_preview(self, text, voice, rate, pitch, volume):
+        # Khong gan previewPath truoc khi co audio that: truoc day file rong
+        # da duoc gan truoc, nen khi tong hop loi, thanh play van hien ra
+        # nhung bam nghe thi im lang, rat de tuong la "giong loi".
+        tmp = ""
         try:
             import edge_tts
 
@@ -146,7 +200,7 @@ class VoiceVibeController(QObject):
                 # Chi stream packet audio va kiem tra co nhan duoc audio that khong.
                 communicate = edge_tts.Communicate(text, voice, connect_timeout=10, receive_timeout=20)
                 received = 0
-                with open(self._preview_path, "wb") as stream:
+                with open(tmp, "wb") as stream:
                     async for packet in communicate.stream():
                         if packet.get("type") == "audio":
                             data = packet.get("data") or b""
@@ -157,21 +211,26 @@ class VoiceVibeController(QObject):
 
             fd, tmp = tempfile.mkstemp(suffix=".mp3", prefix="voicevibe_preview_")
             os.close(fd)
-            self._preview_path = tmp
             asyncio.run(_gen())
-            if not os.path.exists(tmp) or os.path.getsize(tmp) == 0:
-                raise RuntimeError("File nghe thử trống. Hãy thử lại.")
+            if not os.path.exists(tmp) or os.path.getsize(tmp) < 512:
+                raise RuntimeError("File nghe thử trống hoặc quá nhỏ. Hãy thử lại.")
             self._set(status="Đã tạo xong bản nghe thử. Bấm “Nghe thử trong app” trước khi tải xuống.", busy=False, preview=tmp)
         except Exception as exc:  # noqa: BLE001 - surfaced to the user in-app
-            self._set(status=f"Tạo nghe thử thất bại: {exc} Kiểm tra internet rồi thử lại.", busy=False)
+            if tmp:
+                try:
+                    os.remove(tmp)
+                except OSError:
+                    pass
+            # Xoa preview cu de thanh play khong hien file hong.
+            self._set(status=f"Tạo nghe thử thất bại: {exc} Kiểm tra internet rồi thử lại.", busy=False, preview="")
 
     def _run_local_preview(self, text, voice, provider, language="vi"):
+        tmp = ""
         try:
             from haizflow.pipeline.tts import generate_single_voice
 
             fd, tmp = tempfile.mkstemp(suffix=".mp3", prefix="voicevibe_preview_")
             os.close(fd)
-            self._preview_path = tmp
             # video_id rong: tab khong thuoc ve du an nao, pipeline chi dung no de ghi log.
             # Ngon ngu lay tu o chon ngon ngu cua tab, KHONG ghi cung "vi" nua:
             # tieng Anh qua OmniVoice phai chay target_language="en" moi doc tieng Anh.
@@ -179,15 +238,22 @@ class VoiceVibeController(QObject):
                 text, tmp, voice, "", provider=provider,
                 target_language=self._normalize_language(language),
             )
-            if not os.path.exists(tmp) or os.path.getsize(tmp) == 0:
-                raise RuntimeError("File nghe thử trống.")
+            if not os.path.exists(tmp) or os.path.getsize(tmp) < 512:
+                raise RuntimeError("File nghe thử trống hoặc quá nhỏ (dưới 512 byte) — pipeline không tạo được audio thật.")
             self._set(status="Đã tạo xong bản nghe thử. Bấm “Nghe thử trong app” trước khi tải xuống.", busy=False, preview=tmp)
         except Exception as exc:  # noqa: BLE001
+            if tmp:
+                try:
+                    os.remove(tmp)
+                except OSError:
+                    pass
             self._set(
-                status=f"Giọng {provider} chưa tạo được trong tab này: {exc} "
-                       f"Nếu gói {provider} đang tải dở (như VieNeu 1,1/3,2 GB trong ảnh) thì đợi tải xong rồi thử lại, "
+                status=f"Giọng {provider} / {voice} / ngôn ngữ {self._normalize_language(language)} chưa tạo được trong tab này: {exc} "
+                       f"Nếu gói {provider} đang tải dở thì đợi tải xong rồi thử lại. "
+                       f"Nếu vẫn lỗi, hãy thử một câu ngắn trước để tách lỗi model với lỗi văn bản dài, "
                        f"hoặc dùng giọng này trong dự án Tự động/Thủ công của app.",
                 busy=False,
+                preview="",
             )
 
     @Slot(str, str, str, str, str)
@@ -207,6 +273,10 @@ class VoiceVibeController(QObject):
             return
         provider = str(provider or "edge").strip().lower()
         language = self._normalize_language(language)
+        combo_error = self._validate_combo(voice, provider, language)
+        if combo_error:
+            self._set(status=combo_error)
+            return
         self._set(status="Đang tạo bản nghe thử...", busy=True)
         if provider == "edge":
             # Edge: giong da mang ma ngon ngu trong ten (vi-VN-..., en-US-...),
