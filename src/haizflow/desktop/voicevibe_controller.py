@@ -108,8 +108,32 @@ class VoiceVibeController(QObject):
         except Exception as exc:  # noqa: BLE001 - surfaced to the user in-app
             self._set(status=f"Tạo nghe thử thất bại: {exc} Kiểm tra internet rồi thử lại.", busy=False)
 
+    def _run_local_preview(self, text, voice, provider):
+        try:
+            from haizflow.pipeline.tts import generate_single_voice
+
+            fd, tmp = tempfile.mkstemp(suffix=".mp3", prefix="voicevibe_preview_")
+            os.close(fd)
+            self._preview_path = tmp
+            # video_id rong: tab khong thuoc ve du an nao, pipeline chi dung no de ghi log.
+            generate_single_voice(text, tmp, voice, "", provider=provider, target_language="vi")
+            if not os.path.exists(tmp) or os.path.getsize(tmp) == 0:
+                raise RuntimeError("File nghe thử trống.")
+            self._set(status="Đã tạo xong bản nghe thử. Bấm “Nghe thử trong app” trước khi tải xuống.", busy=False, preview=tmp)
+        except Exception as exc:  # noqa: BLE001
+            self._set(
+                status=f"Giọng {provider} chưa tạo được trong tab này: {exc} "
+                       f"Nếu gói {provider} đang tải dở (như VieNeu 1,1/3,2 GB trong ảnh) thì đợi tải xong rồi thử lại, "
+                       f"hoặc dùng giọng này trong dự án Tự động/Thủ công của app.",
+                busy=False,
+            )
+
     @Slot(str, str, str, str, str)
     def generatePreview(self, text, voice, rate="", pitch="", volume=""):
+        self.generatePreviewWithProvider(text, voice, "edge", rate, pitch, volume)
+
+    @Slot(str, str, str, str, str, str)
+    def generatePreviewWithProvider(self, text, voice, provider="edge", rate="", pitch="", volume=""):
         text = str(text or "").strip()
         if self._busy:
             return
@@ -118,12 +142,16 @@ class VoiceVibeController(QObject):
             return
         if not voice:
             voice = EDGE_VOICES[0]
+        provider = str(provider or "edge").strip().lower()
         self._set(status="Đang tạo bản nghe thử...", busy=True)
-        threading.Thread(
-            target=self._run_preview,
-            args=(text, voice, _parse_rate(rate), _parse_pitch(pitch), _parse_rate(volume)),
-            daemon=True,
-        ).start()
+        if provider == "edge":
+            threading.Thread(
+                target=self._run_preview,
+                args=(text, voice, _parse_rate(rate), _parse_pitch(pitch), _parse_rate(volume)),
+                daemon=True,
+            ).start()
+        else:
+            threading.Thread(target=self._run_local_preview, args=(text, voice, provider), daemon=True).start()
 
     @Slot(str)
     def savePreview(self, output_path):

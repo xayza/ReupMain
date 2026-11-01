@@ -102,13 +102,45 @@ Item {
                     font.pixelSize: TypeScale.control
                 }
 
+                Text {
+                    Layout.fillWidth: true
+                    text: qsTr("Nhà cung cấp giọng: Edge là giọng online, VieNeu là 25 giọng Việt local, OmniVoice là giọng local đã cài trong Gói tài nguyên. Nếu VieNeu đang tải dở thì chưa chọn được, đợi tải xong.")
+                    color: Theme.textMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: TypeScale.control
+                    wrapMode: Text.WordWrap
+                }
+
+                ComboBox {
+                    id: providerCombo
+                    Layout.fillWidth: true
+                    textRole: "label"
+                    valueRole: "provider"
+                    model: AppController.ttsProviderOptionsForLanguage("vi")
+                    Component.onCompleted: refreshVoices()
+                    onCurrentIndexChanged: refreshVoices()
+                }
+
+                function refreshVoices() {
+                    var provider = providerCombo.currentValue ? providerCombo.currentValue : "edge"
+                    var options = AppController.voiceOptionsForLanguageAndProvider("vi", provider)
+                    var names = []
+                    var values = []
+                    for (var i = 0; i < options.length; i++) {
+                        names.push(options[i].label + (options[i].available ? "" : " (chưa cài)"))
+                        values.push(options[i].voice)
+                    }
+                    voiceCombo.model = names
+                    voiceCombo._values = values
+                }
+
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.space12
                     ComboBox {
                         id: voiceCombo
                         Layout.fillWidth: true
-                        model: ["vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural", "en-US-JennyNeural", "en-US-GuyNeural", "zh-CN-XiaoxiaoNeural", "zh-CN-YunxiNeural"]
+                        property var _values: []
                     }
                     ComboBox {
                         id: rateCombo
@@ -131,7 +163,7 @@ Item {
                     AppButton {
                         text: qsTr("Tạo nghe thử")
                         enabled: root.voice && !root.voice.busy && voiceText.text.length > 0
-                        onClicked: root.voice.generatePreview(voiceText.text, voiceCombo.currentText, rateCombo.currentText, "+0Hz", "+0%")
+                        onClicked: root.voice.generatePreviewWithProvider(voiceText.text, voiceCombo._values.length > voiceCombo.currentIndex ? voiceCombo._values[voiceCombo.currentIndex] : voiceCombo.currentText, providerCombo.currentValue ? providerCombo.currentValue : "edge", rateCombo.currentText, "+0Hz", "+0%")
                     }
                     AppButton {
                         text: qsTr("Nghe thử trong app")
