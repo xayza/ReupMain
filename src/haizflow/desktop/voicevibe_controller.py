@@ -180,7 +180,8 @@ class VoiceVibeController(QObject):
             self._set(status="Hãy nhập văn bản trước đã.")
             return
         if not voice:
-            voice = EDGE_VOICES[0]
+            self._set(status="Chưa chọn được giọng nào. Hãy chọn nhà cung cấp rồi chọn 1 giọng trong danh sách.")
+            return
         provider = str(provider or "edge").strip().lower()
         self._set(status="Đang tạo bản nghe thử...", busy=True)
         if provider == "edge":

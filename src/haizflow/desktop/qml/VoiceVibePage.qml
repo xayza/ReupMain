@@ -44,9 +44,21 @@ Item {
         onAccepted: referenceField.text = selectedFile.toString().replace("file:///", "")
     }
 
-    function label(text) {
-        return text
+    function refreshVoices() {
+        if (!providerCombo || !voiceCombo || !root.voice)
+            return
+        var provider = providerCombo.currentValue ? providerCombo.currentValue : "edge"
+        var options = root.voice.linkedVoices(provider)
+        packStatus.text = root.voice.linkedPackStatus(provider)
+        voiceListModel.clear()
+        for (var i = 0; i < options.length; i++) {
+            voiceListModel.append({"label": options[i].label + (options[i].available ? "" : " (chưa cài)"), "voice": options[i].voice})
+        }
+        if (voiceListModel.count > 0)
+            voiceCombo.currentIndex = 0
     }
+
+    Component.onCompleted: root.refreshVoices()
 
     ColumnLayout {
         anchors.fill: parent
@@ -127,22 +139,11 @@ Item {
                     textRole: "label"
                     valueRole: "provider"
                     model: AppController.ttsProviderOptionsForLanguage("vi")
-                    Component.onCompleted: refreshVoices()
-                    onCurrentIndexChanged: refreshVoices()
+                    onCurrentIndexChanged: root.refreshVoices()
                 }
 
-                function refreshVoices() {
-                    var provider = providerCombo.currentValue ? providerCombo.currentValue : "edge"
-                    var options = root.voice.linkedVoices(provider)
-                    packStatus.text = root.voice.linkedPackStatus(provider)
-                    var names = []
-                    var values = []
-                    for (var i = 0; i < options.length; i++) {
-                        names.push(options[i].label + (options[i].available ? "" : " (chưa cài)"))
-                        values.push(options[i].voice)
-                    }
-                    voiceCombo.model = names
-                    voiceCombo._values = values
+                ListModel {
+                    id: voiceListModel
                 }
 
                 RowLayout {
@@ -151,7 +152,9 @@ Item {
                     ComboBox {
                         id: voiceCombo
                         Layout.fillWidth: true
-                        property var _values: []
+                        textRole: "label"
+                        valueRole: "voice"
+                        model: voiceListModel
                     }
                     ComboBox {
                         id: rateCombo
@@ -174,7 +177,7 @@ Item {
                     AppButton {
                         text: qsTr("Tạo nghe thử")
                         enabled: root.voice && !root.voice.busy && voiceText.text.length > 0
-                        onClicked: root.voice.generatePreviewWithProvider(voiceText.text, voiceCombo._values.length > voiceCombo.currentIndex ? voiceCombo._values[voiceCombo.currentIndex] : voiceCombo.currentText, providerCombo.currentValue ? providerCombo.currentValue : "edge", rateCombo.currentText, "+0Hz", "+0%")
+                        onClicked: root.voice.generatePreviewWithProvider(voiceText.text, voiceCombo.currentValue ? voiceCombo.currentValue : "", providerCombo.currentValue ? providerCombo.currentValue : "edge", rateCombo.currentText, "+0Hz", "+0%")
                     }
                     AppButton {
                         text: qsTr("Nghe thử trong app")
