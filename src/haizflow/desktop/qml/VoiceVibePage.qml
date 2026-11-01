@@ -191,6 +191,58 @@ Item {
                     }
                 }
 
+                // Thanh play ngay trong tab: tao xong la an nghe luon, khong can mo trinh phat ngoai.
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.space8
+                    visible: root.voice && root.voice.previewPath.length > 0
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.space12
+                        AppButton {
+                            text: player.playbackState === MediaPlayer.PlayingState ? qsTr("Tạm dừng") : qsTr("▶ Nghe ngay tại đây")
+                            onClicked: player.playbackState === MediaPlayer.PlayingState ? player.pause() : player.play()
+                        }
+                        AppButton {
+                            text: qsTr("Dừng")
+                            onClicked: player.stop()
+                        }
+                        Text {
+                            text: player.playbackState === MediaPlayer.PlayingState ? qsTr("Đang phát...") : qsTr("Đã tạo xong, bấm Nghe ngay tại đây để nghe.")
+                            color: Theme.textMuted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: TypeScale.control
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.space8
+                        Text {
+                            text: Math.floor(player.position / 60000) + ":" + (Math.floor(player.position / 1000) % 60 < 10 ? "0" : "") + (Math.floor(player.position / 1000) % 60)
+                            color: Theme.textMuted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: TypeScale.control
+                        }
+                        Slider {
+                            Layout.fillWidth: true
+                            from: 0
+                            to: player.duration > 0 ? player.duration : 1
+                            value: player.position
+                            onMoved: player.setPosition(value)
+                        }
+                        Text {
+                            text: Math.floor(player.duration / 60000) + ":" + (Math.floor(player.duration / 1000) % 60 < 10 ? "0" : "") + (Math.floor(player.duration / 1000) % 60)
+                            color: Theme.textMuted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: TypeScale.control
+                        }
+                    }
+                }
+
                 Text {
                     Layout.fillWidth: true
                     text: root.voice ? root.voice.status : ""
